@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCC क्विज़ - 60 प्रश्न (ऑप्शन्स रैंडम)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Noto+Sans+Devanagari:wght@400;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins','Noto Sans Devanagari',sans-serif;}
+body{background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:15px;}
+.quiz-container{background:white;max-width:850px;width:100%;border-radius:20px;box-shadow:0 20px 40px rgba(0,0,0,0.3);overflow:hidden;position:relative;}
+.header{background:#764ba2;color:white;padding:20px;text-align:center;font-size:24px;font-weight:600;}
+.total-timer{position:absolute;top:15px;right:15px;background:rgba(0,0,0,0.85);color:#fff;padding:8px 16px;border-radius:25px;font-size:16px;font-weight:bold;z-index:100;}
+.quiz-body{padding:30px;text-align:center;}
+.question-number{font-size:18px;color:#764ba2;margin-bottom:15px;font-weight:600;}
+.timer-circle{width:110px;height:110px;margin:20px auto;position:relative;}
+.timer-circle svg{transform:rotate(-90deg);}
+.circle-bg{fill:none;stroke:#eee;stroke-width:12;}
+.circle-fg{fill:none;stroke:#e74c3c;stroke-width:12;stroke-linecap:round;}
+.timer-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:24px;font-weight:bold;color:#e74c3c;}
+.question{font-size:18px;margin:20px 0;line-height:1.4;font-weight:600;}
+.question small{display:block;color:#555;margin-top:5px;font-size:14px;}
+.options{display:grid;gap:12px;margin:25px 0;}
+.option{padding:16px;background:#f8f9fa;border:2px solid #ddd;border-radius:12px;cursor:pointer;transition:all 0.3s;font-size:15px;text-align:left;}
+.option:hover{background:#e9ecef;border-color:#764ba2;}
+.option.selected{background:#764ba2;color:white;border-color:#764ba2;}
+.btn{padding:12px 28px;font-size:16px;border:none;border-radius:10px;cursor:pointer;margin:8px;}
+.btn-green{background:#27ae60;color:white;}
+.btn-blue{background:#2980b9;color:white;}
+.btn-orange{background:#e67e22;color:white;}
+.btn-group{display:flex;justify-content:space-between;margin-top:30px;flex-wrap:wrap;gap:12px;}
+.result,.review{padding:40px 25px;text-align:center;}
+.hide{display:none;}
+.review-item{background:#f9f9f9;padding:18px;margin:15px 0;border-radius:12px;border-left:6px solid;text-align:left;line-height:1.6;font-size:15px;}
+.correct{border-left-color:#27ae60;background:#d5f5e3;}
+.incorrect{border-left-color:#e74c3c;background:#fadbd8;}
+input{width:100%;padding:15px;margin:10px 0;font-size:16px;border-radius:10px;border:2px solid #ddd;}
+@media (max-width: 768px){.question{font-size:16px;}.option{font-size:14px;padding:14px;}}
+</style>
+</head>
+<body>
+<div class="quiz-container">
+  <div class="header">CCC<br><small>कंप्यूटर कोर्स</small></div>
+  <div class="total-timer" id="total-timer">कुल समय: 30:00</div>
+
+  <div id="login" class="quiz-body">
+    <h2 style="margin-bottom:20px;color:#764ba2;font-size:20px;">अपनी जानकारी भरें</h2>
+    <input type="text" id="candidate-name" placeholder="अपना नाम लिखें">
+    <input type="text" id="candidate-roll" placeholder="रोल नंबर">
+    <button class="btn btn-green" onclick="startQuiz()" style="width:100%;padding:15px;margin-top:20px;font-size:18px;">क्विज़ शुरू करें</button>
+  </div>
+
+  <div id="quiz" class="quiz-body hide">
+    <div class="question-number">प्रश्न <span id="qno">1</span> / 60</div>
+    <div class="timer-circle">
+      <svg width="110" height="110">
+        <circle class="circle-bg" cx="55" cy="55" r="49"></circle>
+        <circle class="circle-fg" id="circle-fg" cx="55" cy="55" r="49" stroke-dasharray="308" stroke-dashoffset="0"></circle>
+      </svg>
+      <div class="timer-text" id="question-timer">30</div>
+    </div>
+    <div class="question" id="question"></div>
+    <div class="options" id="options"></div>
+    <div class="btn-group">
+      <button class="btn btn-orange" id="back-btn" onclick="previousQuestion()">पिछला</button>
+      <button class="btn btn-green" onclick="nextQuestion()">अगला</button>
+    </div>
+  </div>
+
+  <div id="result" class="result hide">
+    <h2 style="font-size:24px;">क्विज़ समाप्त!</h2>
+    <p id="score" style="font-size:20px;margin:25px 0;font-weight:600;"></p>
+    <button class="btn btn-blue" onclick="showReview()">रिव्यू देखें</button><br><br>
+    <button class="btn btn-green no-print" onclick="location.reload()">नया क्विज़</button>
+  </div>
+
+  <div id="review" class="review hide">
+    <h2 style="font-size:22px;">आपके जवाबों का पूरा रिव्यू</h2>
+    <p style="font-size:16px;"><strong>नाम:</strong> <span id="rev-name"></span> | <strong>रोल:</strong> <span id="rev-roll"></span></p>
+    <div id="review-container"></div>
+    <div style="margin-top:25px;" class="no-print">
+      <button class="btn btn-blue" onclick="window.print()">प्रिंट / PDF करें</button>
+      <button class="btn btn-green" onclick="location.reload()">नया क्विज़</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== 60 प्रश्न (ऑप्शन्स हर बार रैंडम) ====================
+let originalQuestions = [
+  { q: "कंप्यूटर क्या है?", a: "इलेक्ट्रॉनिक डेटा प्रोसेसिंग युक्ति", options: ["केवल कैलकुलेटर","टेलीविजन","खिलौना","इलेक्ट्रॉनिक डेटा प्रोसेसिंग युक्ति"] },
+  { q: "CPU का पूरा नाम?", a: "सेंट्रल प्रोसेसिंग यूनिट", options: ["कंप्यूटर पर्सनल यूनिट","सेंट्रल पावर यूनिट","कंट्रोल प्रोसेसिंग यूनिट","सेंट्रल प्रोसेसिंग यूनिट"] },
+  { q: "RAM का पूरा नाम?", a: "रैंडम एक्सेस मेमोरी", options: ["रीड ओनली मेमोरी","राइट एक्सेस मेमोरी","रन एक्सेस मेमोरी","रैंडम एक्सेस मेमोरी"] },
+  { q: "ROM का पूरा नाम?", a: "रीड ओनली मेमोरी", options: ["रैंडम ओनली मेमोरी","राइट ओनली मेमोरी","रजिस्टर ओनली मेमोरी","रीड ओनली मेमोरी"] },
+  { q: "RAM के मुख्य दो प्रकार?", a: "SRAM और DRAM", options: ["PROM और EPROM","EEPROM और Flash","ROM और Cache","SRAM और DRAM"] },
+  { q: "SRAM का पूरा नाम?", a: "स्टेटिक रैंडम एक्सेस मेमोरी", options: ["सिंक्रोनस रैंडम एक्सेस मेमोरी","सुपर रैंडम एक्सेस मेमोरी","सिंगल रैंडम एक्सेस मेमोरी","स्टेटिक रैंडम एक्सेस मेमोरी"] },
+  { q: "DRAM का पूरा नाम?", a: "डायनामिक रैंडम एक्सेस मेमोरी", options: ["डायरेक्ट रैंडम एक्सेस मेमोरी","डिजिटल रैंडम एक्सेस मेमोरी","डायोड रैंडम एक्सेस मेमोरी","डायनामिक रैंडम एक्सेस मेमोरी"] },
+  { q: "DDR का पूरा नाम?", a: "डबल डेटा रेट", options: ["डायरेक्ट डेटा रेट","डायनामिक डेटा रेट","डिजिटल डेटा रेट","डबल डेटा रेट"] },
+  { q: "ROM के मुख्य प्रकार?", a: "PROM, EPROM, EEPROM", options: ["SRAM, DRAM, SDRAM","Mask ROM, Flash, Cache","RAM, Cache, Register","PROM, EPROM, EEPROM"] },
+  { q: "PROM का पूरा नाम?", a: "प्रोग्रामेबल रीड ओनली मेमोरी", options: ["पर्मानेंट रीड ओनली मेमोरी","प्राइमरी रीड ओनली मेमोरी","पर्सनल रीड ओनली मेमोरी","प्रोग्रामेबल रीड ओनली मेमोरी"] },
+  { q: "EPROM को मिटाने का तरीका?", a: "अल्ट्रावायलेट प्रकाश", options: ["इलेक्ट्रिक करंट","हीट","मैग्नेट","अल्ट्रावायलेट प्रकाश"] },
+  { q: "EEPROM को मिटाने का तरीका?", a: "इलेक्ट्रिकली", options: ["UV लाइट","हीट","मैनुअली","इलेक्ट्रिकली"] },
+  { q: "फ्लैश मेमोरी किसका सब-टाइप है?", a: "EEPROM", options: ["EPROM","PROM","Mask ROM","EEPROM"] },
+  { q: "कंप्यूटर के मुख्य प्रकार?", a: "सुपर, मेनफ्रेम, मिनी, माइक्रो", options: ["डेस्कटॉप, लैपटॉप, टैबलेट, मोबाइल","Analog, Digital, Hybrid","कोई नहीं","सुपर, मेनफ्रेम, मिनी, माइक्रो"] },
+  { q: "सुपर कंप्यूटर का उपयोग?", a: "वैज्ञानिक गणना", options: ["गेमिंग","टाइपिंग","ऑफिस वर्क","वैज्ञानिक गणना"] },
+  { q: "पर्सनल कंप्यूटर किस श्रेणी में?", a: "माइक्रो कंप्यूटर", options: ["मिनी कंप्यूटर","मेनफ्रेम","सुपर कंप्यूटर","माइक्रो कंप्यूटर"] },
+  { q: "इनपुट डिवाइस उदाहरण?", a: "कीबोर्ड", options: ["मॉनिटर","प्रिंटर","स्पीकर","कीबोर्ड"] },
+  { q: "आउटपुट डिवाइस उदाहरण?", a: "मॉनिटर", options: ["कीबोर्ड","माउस","वेबकैम","मॉनिटर"] },
+  { q: "प्राइमरी मेमोरी उदाहरण?", a: "RAM", options: ["हार्ड डिस्क","पेन ड्राइव","सीडी","RAM"] },
+  { q: "सेकेंडरी मेमोरी उदाहरण?", a: "हार्ड डिस्क", options: ["RAM","कैश मेमोरी","रजिस्टर","हार्ड डिस्क"] },
+  { q: "सॉफ्टवेयर के दो मुख्य प्रकार?", a: "सिस्टम और एप्लीकेशन", options: ["हार्डवेयर और फर्मवेयर","इनपुट और आउटपुट","प्राइमरी और सेकेंडरी","सिस्टम और एप्लीकेशन"] },
+  { q: "ऑपरेटिंग सिस्टम किस प्रकार का सॉफ्टवेयर?", a: "सिस्टम सॉफ्टवेयर", options: ["एप्लीकेशन सॉफ्टवेयर","यूटिलिटी सॉफ्टवेयर","ड्राइवर सॉफ्टवेयर","सिस्टम सॉफ्टवेयर"] },
+  { q: "MS Word किस प्रकार का सॉफ्टवेयर?", a: "एप्लीकेशन सॉफ्टवेयर", options: ["सिस्टम सॉफ्टवेयर","ड्राइवर","फर्मवेयर","एप्लीकेशन सॉफ्टवेयर"] },
+  { q: "दुनिया का पहला इलेक्ट्रॉनिक कंप्यूटर?", a: "ENIAC", options: ["UNIVAC","EDVAC","EDSAC","ENIAC"] },
+  { q: "भारत का पहला कंप्यूटर?", a: "TIFRAC", options: ["PARAM","Siddhartha","HEC-2M","TIFRAC"] },
+  { q: "भारत का पहला सुपरकंप्यूटर?", a: "PARAM 8000", options: ["CRAY","FLOSOLVER","PACE","PARAM 8000"] },
+  { q: "पहली पीढ़ी की तकनीक?", a: "वैक्यूम ट्यूब", options: ["ट्रांजिस्टर","IC","माइक्रोप्रोसेसर","वैक्यूम ट्यूब"] },
+  { q: "दूसरी पीढ़ी की तकनीक?", a: "ट्रांजिस्टर", options: ["वैक्यूम ट्यूब","IC","LSI","ट्रांजिस्टर"] },
+  { q: "तीसरी पीढ़ी की तकनीक?", a: "इंटीग्रेटेड सर्किट", options: ["ट्रांजिस्टर","वैक्यूम ट्यूब","VLSI","इंटीग्रेटेड सर्किट"] },
+  { q: "चौथी पीढ़ी की तकनीक?", a: "माइक्रोप्रोसेसर", options: ["IC","ट्रांजिस्टर","वैक्यूम ट्यूब","माइक्रोप्रोसेसर"] },
+  { q: "पांचवीं पीढ़ी का आधार?", a: "कृत्रिम बुद्धिमत्ता", options: ["VLSI","ULSI","नैनोटेक्नोलॉजी","कृत्रिम बुद्धिमत्ता"] },
+  { q: "मेमोरी की सबसे छोटी इकाई?", a: "बिट", options: ["बाइट","KB","MB","बिट"] },
+  { q: "1 Byte = कितने Bit?", a: "8 Bit", options: ["4 Bit","16 Bit","32 Bit","8 Bit"] },
+  { q: "1 KB = कितने Byte?", a: "1024 Byte", options: ["1000 Byte","512 Byte","2048 Byte","1024 Byte"] },
+  { q: "1 MB = कितने KB?", a: "1024 KB", options: ["1000 KB","512 KB","2048 KB","1024 KB"] },
+  { q: "1 GB = कितने MB?", a: "1024 MB", options: ["1000 MB","512 MB","2048 MB","1024 MB"] },
+  { q: "ALU का पूरा नाम?", a: "Arithmetic Logic Unit", options: ["Address Logic Unit","Advanced Logic Unit","Application Logic Unit","Arithmetic Logic Unit"] },
+  { q: "CU का पूरा नाम?", a: "Control Unit", options: ["Central Unit","Calculate Unit","Computer Unit","Control Unit"] },
+  { q: "BIOS का पूरा नाम?", a: "Basic Input Output System", options: ["Binary Input Output System","Boot Input Output System","Basic Internet Operating System","Basic Input Output System"] },
+  { q: "USB का पूरा नाम?", a: "Universal Serial Bus", options: ["Universal Storage Bus","Unique Serial Bus","Universal System Bus","Universal Serial Bus"] },
+  { q: "LAN का पूरा नाम?", a: "Local Area Network", options: ["Large Area Network","Long Area Network","Link Area Network","Local Area Network"] },
+  { q: "WWW का पूरा नाम?", a: "World Wide Web", options: ["World Wide Wire","Web Wide World","World Web Wide","World Wide Web"] },
+  { q: "कंप्यूटर के पिता कौन हैं?", a: "चार्ल्स बैबेज", options: ["एलन ट्यूरिंग","बिल गेट्स","जॉन वॉन न्यूमन","चार्ल्स बैबेज"] },
+  { q: "Cache Memory कहाँ होती है?", a: "CPU और RAM के बीच", options: ["RAM और ROM के बीच","CPU और HDD के बीच","ROM और HDD के बीच","CPU और RAM के बीच"] },
+  { q: "SSD किस तकनीक पर आधारित है?", a: "Flash Memory", options: ["Magnetic Disk","Optical Disk","Tape","Flash Memory"] },
+  { q: "GUI का पूरा नाम?", a: "Graphical User Interface", options: ["General User Interface","Graphic User Interaction","Global User Interface","Graphical User Interface"] },
+  { q: "वर्चुअल मेमोरी क्या है?", a: "सेकेंडरी स्टोरेज का RAM की तरह उपयोग", options: ["RAM का बैकअप","ROM का एक्सटेंशन","कैश मेमोरी","सेकेंडरी स्टोरेज का RAM की तरह उपयोग"] },
+  { q: "फर्मवेयर क्या है?", a: "हार्डवेयर में एम्बेडेड सॉफ्टवेयर", options: ["ऑपरेटिंग सिस्टम","एप्लीकेशन सॉफ्टवेयर","ड्राइवर","हार्डवेयर में एम्बेडेड सॉफ्टवेयर"] },
+  { q: "HDD का पूरा नाम?", a: "हार्ड डिस्क ड्राइव", options: ["हाई डेफिनिशन डिस्क","हार्ड डेटा ड्राइव","हाई डेंसिटी डिस्क","हार्ड डिस्क ड्राइव"] },
+  { q: "SSD का पूरा नाम?", a: "सॉलिड स्टेट ड्राइव", options: ["सुपर स्पीड ड्राइव","सॉलिड स्टोरेज डिस्क","सिस्टम स्टेट ड्राइव","सॉलिड स्टेट ड्राइव"] },
+  { q: "CD का पूरा नाम?", a: "कॉम्पैक्ट डिस्क", options: ["कंप्यूटर डिस्क","कॉम्प्यूटर डेटा","कॉन्टिन्यूअस डिस्क","कॉम्पैक्ट डिस्क"] },
+  { q: "DVD का पूरा नाम?", a: "डिजिटल वर्सेटाइल डिस्क", options: ["डिजिटल वीडियो डिस्क","डायरेक्ट वीडियो डिस्क","डिजिटल वॉल्यूम डिस्क","डिजिटल वर्सेटाइल डिस्क"] },
+  { q: "कंप्यूटर जनरेशन में वैक्यूम ट्यूब किसमें?", a: "पहली पीढ़ी", options: ["दूसरी पीढ़ी","तीसरी पीढ़ी","चौथी पीढ़ी","पहली पीढ़ी"] },
+  { q: "भारतीय सुपर कंप्यूटर सीरीज?", a: "परम", options: ["क्रे","आईबीएम","एप्पल","परम"] },
+  { q: "ENIAC का पूरा नाम?", a: "इलेक्ट्रॉनिक न्यूमेरिकल इंटीग्रेटर एंड कंप्यूटर", options: ["इलेक्ट्रिकल न्यूमेरिकल इंटीग्रेटर","इलेक्ट्रॉनिक नेटवर्क इंटीग्रेटर","कोई नहीं","इलेक्ट्रॉनिक न्यूमेरिकल इंटीग्रेटर एंड कंप्यूटर"] },
+  { q: "यूटिलिटी सॉफ्टवेयर क्या है?", a: "सिस्टम मेंटेनेंस के लिए", options: ["गेमिंग के लिए","ऑफिस वर्क के लिए","इंटरनेट के लिए","सिस्टम मेंटेनेंस के लिए"] },
+  { q: "मेनफ्रेम कंप्यूटर का उपयोग?", a: "बड़े संगठनों में", options: ["घरेलू उपयोग में","मोबाइल में","खेल में","बड़े संगठनों में"] },
+  { q: "मिनी कंप्यूटर क्या है?", a: "मध्यम आकार का कंप्यूटर", options: ["बहुत छोटा","बहुत बड़ा","पोर्टेबल","मध्यम आकार का कंप्यूटर"] },
+  { q: "प्रोसेसिंग यूनिट क्या है?", a: "सीपीयू", options: ["रैम","रोम","एचडीडी","सीपीयू"] },
+  { q: "SDRAM का पूरा नाम?", a: "सिंक्रोनस डायनामिक रैंडम एक्सेस मेमोरी", options: ["सिंगल डायनामिक रैंडम एक्सेस मेमोरी","सुपर डायनामिक रैंडम एक्सेस मेमोरी","सेकेंडरी डायनामिक रैंडम एक्सेस मेमोरी","सिंक्रोनस डायनामिक रैंडम एक्सेस मेमोरी"] }
+];
+
+// ऑप्शन्स को रैंडम शफ़ल करना
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+let questions = originalQuestions.map(item => {
+  let opts = [...item.options];
+  shuffleArray(opts);
+  return { q: item.q, a: item.a, options: opts };
+});
+
+let currentQuestion = 0;
+let answers = new Array(questions.length).fill(null);
+let candidateName = '', candidateRoll = '';
+let totalTime = 30 * 60, questionTime = 30;
+let totalTimer, questionTimer;
+
+function formatTime(seconds) {
+  const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+  const s = String(seconds % 60).padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+function startTotalTimer() {
+  document.getElementById('total-timer').innerText = `कुल समय: ${formatTime(totalTime)}`;
+  totalTimer = setInterval(() => {
+    totalTime--;
+    document.getElementById('total-timer').innerText = `कुल समय: ${formatTime(totalTime)}`;
+    if (totalTime <= 0) { clearInterval(totalTimer); endQuiz(); }
+  }, 1000);
+}
+
+function startQuestionTimer() {
+  let timeLeft = questionTime;
+  document.getElementById('question-timer').innerText = timeLeft;
+  const circumference = 308;
+  const circle = document.getElementById('circle-fg');
+  circle.style.strokeDashoffset = 0;
+
+  questionTimer = setInterval(() => {
+    timeLeft--;
+    document.getElementById('question-timer').innerText = timeLeft;
+    const offset = circumference * (1 - timeLeft / questionTime);
+    circle.style.strokeDashoffset = offset;
+    if (timeLeft <= 0) {
+      clearInterval(questionTimer);
+      nextQuestion();
+    }
+  }, 1000);
+}
+
+function loadQuestion() {
+  const q = questions[currentQuestion];
+  document.getElementById('qno').innerText = currentQuestion + 1;
+  document.getElementById('question').innerHTML = q.q;
+  const optsDiv = document.getElementById('options');
+  optsDiv.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'option';
+    div.innerHTML = opt;
+    div.onclick = () => selectOption(i);
+    if (answers[currentQuestion] === i) div.classList.add('selected');
+    optsDiv.appendChild(div);
+  });
+  document.getElementById('back-btn').style.display = currentQuestion === 0 ? 'none' : 'block';
+  clearInterval(questionTimer);
+  startQuestionTimer();
+}
+
+function selectOption(idx) {
+  answers[currentQuestion] = idx;
+  document.querySelectorAll('.option').forEach((el, i) => el.classList.toggle('selected', i === idx));
+}
+
+function nextQuestion() {
+  if (currentQuestion < questions.length - 1) {
+    currentQuestion++;
+    loadQuestion();
+  } else {
+    endQuiz();
+  }
+}
+
+function previousQuestion() {
+  if (currentQuestion > 0) {
+    currentQuestion--;
+    loadQuestion();
+  }
+}
+
+function startQuiz() {
+  candidateName = document.getElementById('candidate-name').value.trim();
+  candidateRoll = document.getElementById('candidate-roll').value.trim();
+  if (!candidateName || !candidateRoll) {
+    alert('नाम और रोल नंबर भरें!');
+    return;
+  }
+  document.getElementById('login').classList.add('hide');
+  document.getElementById('quiz').classList.remove('hide');
+  startTotalTimer();
+  loadQuestion();
+}
+
+function endQuiz() {
+  clearInterval(questionTimer); clearInterval(totalTimer);
+  document.getElementById('quiz').classList.add('hide');
+  document.getElementById('result').classList.remove('hide');
+  let score = 0;
+  answers.forEach((ans, i) => {
+    if (ans !== null && questions[i].options[ans] === questions[i].a) score++;
+  });
+  document.getElementById('score').innerHTML = `<strong>आपका स्कोर: ${score} / 60</strong><br>Your Score: ${score} / 60`;
+}
+
+function showReview() {
+  document.getElementById('result').classList.add('hide');
+  document.getElementById('review').classList.remove('hide');
+  document.getElementById('rev-name').innerText = candidateName;
+  document.getElementById('rev-roll').innerText = candidateRoll;
+  const container = document.getElementById('review-container');
+  container.innerHTML = '';
+  questions.forEach((q, i) => {
+    const userAns = answers[i] !== null ? q.options[answers[i]] : 'कोई जवाब नहीं';
+    const correct = userAns === q.a;
+    const div = document.createElement('div');
+    div.className = `review-item ${correct ? 'correct' : 'incorrect'}`;
+    div.innerHTML = `<strong>प्रश्न ${i+1}:</strong> ${q.q}<br>
+      <strong>आपका जवाब:</strong> <span style="color:${correct?'#27ae60':'#e74c3c'};">${userAns}</span><br>
+      <strong>सही जवाब:</strong> <span style="color:#27ae60;">${q.a}</span>`;
+    container.appendChild(div);
+  });
+}
+</script>
+</body>
+</html>
